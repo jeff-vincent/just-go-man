@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -34,7 +35,7 @@ func getAlbums(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+func getAlbumByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/albums/")
 	// for loop looking for matching ID
 	for _, a := range albums {
@@ -51,18 +52,26 @@ func GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
-
-func stuff(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "this is different...")
+func saveAlbum(w http.ResponseWriter, r *http.Request) {
+	title := r.FormValue("title")
+	artist := r.FormValue("artist")
+	p := r.FormValue("price")
+	price, err := strconv.ParseFloat(p, 64)
+	if err != nil {
+		return
+	}
+	latest_id := albums[len(albums)-1].ID
+	id_as_int, _ := strconv.Atoi(latest_id)
+	id := string(id_as_int + 1)
+	a := album{ID: id, Title: title, Artist: artist, Price: price}
+	albums = append(albums, a)
+	b, err := json.Marshal(a)
+	fmt.Fprint(w, string(b))
 }
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.HandleFunc("/different", stuff)
 	http.HandleFunc("/albums", getAlbums)
-	http.HandleFunc("/albums/", GetAlbumByID)
+	http.HandleFunc("/albums/", getAlbumByID)
+	http.HandleFunc("/save-album", saveAlbum)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
