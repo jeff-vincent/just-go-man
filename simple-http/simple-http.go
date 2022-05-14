@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // album represents data about a record album.
@@ -33,6 +34,23 @@ func getAlbums(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/albums/")
+	// for loop looking for matching ID
+	for _, a := range albums {
+		if a.ID == id {
+			// convert matching struct to JSON
+			b, err := json.Marshal(a)
+			if err != nil {
+				fmt.Println("whoops...")
+			} else {
+				//write response
+				fmt.Fprint(w, string(b))
+			}
+		}
+	}
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
@@ -45,5 +63,6 @@ func main() {
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/different", stuff)
 	http.HandleFunc("/albums", getAlbums)
+	http.HandleFunc("/albums/", GetAlbumByID)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
