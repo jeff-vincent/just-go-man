@@ -62,6 +62,7 @@ func saveAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 	latest_id := albums[len(albums)-1].ID
 	id_as_int, _ := strconv.Atoi(latest_id)
+	//TODO: fix this
 	id := string(id_as_int + 1)
 	a := album{ID: id, Title: title, Artist: artist, Price: price}
 	albums = append(albums, a)
@@ -69,9 +70,34 @@ func saveAlbum(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(b))
 }
 
+func remove(a album, albums []album) []album {
+	for index, alb := range albums {
+		if alb == a {
+			// TODO: why duplicates of ID 3?
+			return append(albums[0:index], albums[index+1:]...)
+		}
+	}
+	return nil
+}
+
+func deleteAlbum(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/delete-album/")
+	for _, a := range albums {
+		if a.ID == id {
+			albums := remove(a, albums)
+			b, err := json.Marshal(albums)
+			if err != nil {
+				return
+			}
+			fmt.Fprint(w, string(b))
+		}
+	}
+}
+
 func main() {
 	http.HandleFunc("/albums", getAlbums)
 	http.HandleFunc("/albums/", getAlbumByID)
 	http.HandleFunc("/save-album", saveAlbum)
+	http.HandleFunc("/delete-album/", deleteAlbum)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
