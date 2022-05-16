@@ -25,7 +25,7 @@ var albums = []album{
 }
 
 func getAlbums(w http.ResponseWriter, r *http.Request) {
-	b, err := json.Marshal(albums)
+	b, err := json.Marshal(&albums)
 	if err != nil {
 		fmt.Println("Unable to convert the struct to a JSON string")
 	} else {
@@ -41,7 +41,7 @@ func getAlbumByID(w http.ResponseWriter, r *http.Request) {
 	for _, a := range albums {
 		if a.ID == id {
 			// convert matching struct to JSON
-			b, err := json.Marshal(a)
+			b, err := json.Marshal(&a)
 			if err != nil {
 				fmt.Println("whoops...")
 			} else {
@@ -93,23 +93,24 @@ func deleteAlbum(w http.ResponseWriter, r *http.Request) {
 
 func updateAlbum(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/update-album/")
+	albums2 := []album{}
 	for _, alb := range albums {
 		if id == alb.ID {
-			p := &alb
 			if r.FormValue("artist") != "" {
-				p.Artist = r.FormValue("artist")
+				alb.Artist = r.FormValue("artist")
 			}
 			if r.FormValue("title") != "" {
-				p.Title = r.FormValue("title")
+				alb.Title = r.FormValue("title")
 			}
 			if r.FormValue("price") != "" {
-				p.Price, _ = strconv.ParseFloat(r.FormValue("price"), 64)
+				alb.Price, _ = strconv.ParseFloat(r.FormValue("price"), 64)
 			}
 		}
+		albums2 = append(albums2, alb)
 		b, _ := json.Marshal(alb)
 		fmt.Fprint(w, string(b))
 	}
-
+	albums = albums2
 }
 
 func main() {
