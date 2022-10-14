@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,14 +14,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var MONGO_URI = os.Getenv("MONGO_URI")
+
 func insertDoc(client mongo.Client, key string, value string) {
 	coll := client.Database("example").Collection("example")
 	_, err := coll.InsertOne(context.TODO(), bson.D{{key, value}})
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
-
 }
 
 func getDoc(client mongo.Client, key string, value string) bson.D {
@@ -30,16 +31,29 @@ func getDoc(client mongo.Client, key string, value string) bson.D {
 	err := coll.FindOne(context.TODO(), bson.D{{key, value}}).Decode(&result)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	return result
+}
 
+func getAllDocs(client mongo.Client) []bson.M {
+	coll := client.Database("example").Collection("example")
+	cursor, err := coll.Find(context.TODO(), bson.D{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []bson.M
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		panic(err)
+	}
+	return results
 }
 
 func main() {
-
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.NewClient(options.Client().ApplyURI(MONGO_URI))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,15 +72,21 @@ func main() {
 		insertDoc(*client, key, value)
 	})
 
-	r.POST("/get-doc", func(c *gin.Context) {
-		key := c.PostForm("key")
-		value := c.PostForm("value")
+	r.GET("/get-doc", func(c *gin.Context) {
+		key := c.Query("key")
+		value := c.Query("value")
 		result := getDoc(*client, key, value)
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": result,
+			"Data": result,
+		})
+	})
+
+	r.GET("/get-all-docs", func(c *gin.Context) {
+		result := getAllDocs(*client)
+		c.JSON(http.StatusOK, gin.H{
+			"Data": result,
 		})
 	})
 	r.Run()
-
 }
