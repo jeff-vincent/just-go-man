@@ -1,0 +1,31 @@
+---
+version: '3'
+
+services:
+  db:
+    image: mongo:5.0
+    ports:
+      - 27017:27017
+  web_api:
+    restart: always
+    build: 
+      context: ./gin_web_api
+      dockerfile: ./Dockerfile
+    ports:
+      - 80:8081
+    environment:
+      - DB_SERVICE_HOST=db_service
+      - DB_SERVICE_PORT=8080
+    command: ["./app"]
+  db_service:
+    restart: always
+    build: 
+      context: ./gin_db_service
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      - MONGO_HOST=db
+      - MONGO_PORT=27017
+    command: ["./app"]
+ 

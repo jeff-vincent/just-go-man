@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var MONGO_URI = os.Getenv("MONGO_URI")
+var MONGO_HOST = os.Getenv("MONGO_HOST")
+var MONGO_PORT = os.Getenv("MONGO_PORT")
 
 func insertDoc(client mongo.Client, key string, value string) {
 	coll := client.Database("example").Collection("example")
@@ -53,7 +55,8 @@ func getAllDocs(client mongo.Client) []bson.M {
 }
 
 func main() {
-	client, err := mongo.NewClient(options.Client().ApplyURI(MONGO_URI))
+	mongo_uri := fmt.Sprintf("mongodb://%s:%s", MONGO_HOST, MONGO_PORT)
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_uri))
 	if err != nil {
 		log.Fatal(err)
 	}

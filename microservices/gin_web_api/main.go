@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,11 +20,15 @@ type Docs struct {
 	Data []bson.M
 }
 
+var DB_SERVICE_HOST = os.Getenv("DB_SERVICE_HOST")
+var DB_SERVICE_PORT = os.Getenv("DB_SERVICE_PORT")
+
 func insertDoc(c *gin.Context) {
 	key := c.PostForm("key")
 	value := c.PostForm("value")
 	formData := url.Values{"key": {key}, "value": {value}}
-	resp, _ := http.PostForm("http://127.0.0.1:8080/insert-doc", formData)
+	address := fmt.Sprintf("http://%s:%s/insert-doc", DB_SERVICE_HOST, DB_SERVICE_PORT)
+	resp, _ := http.PostForm(address, formData)
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	c.JSON(http.StatusOK, gin.H{
@@ -34,7 +39,7 @@ func insertDoc(c *gin.Context) {
 func getDoc(c *gin.Context) {
 	key := c.Query("key")
 	value := c.Query("value")
-	address := fmt.Sprintf("http://127.0.0.1:8080/get-doc?key=%s&value=%s", key, value)
+	address := fmt.Sprintf("http://%s:%s/get-doc?key=%s&value=%s", DB_SERVICE_HOST, DB_SERVICE_PORT, key, value)
 	resp, _ := http.Get(address)
 	defer resp.Body.Close()
 	val := &Doc{}
@@ -50,7 +55,8 @@ func getDoc(c *gin.Context) {
 }
 
 func getAllDocs(c *gin.Context) {
-	resp, _ := http.Get("http://127.0.0.1:8080/get-all-docs")
+	address := fmt.Sprintf("http://%s:%s/get-all-docs", DB_SERVICE_HOST, DB_SERVICE_PORT)
+	resp, _ := http.Get(address)
 	defer resp.Body.Close()
 	val := &Docs{}
 	fmt.Println(resp.Body)
