@@ -27,55 +27,51 @@ var MONGO2_PORT = os.Getenv("MONGO2_PORT")
 var REDIS_HOST = os.Getenv("REDIS_HOST")
 var REDIS_PORT = os.Getenv("REDIS_PORT")
 
-func insertDoc(post bson.D, mongo2 *mongo.Client) *mongo.InsertOneResult {
+func insertDoc(post bson.M, mongo2 *mongo.Client) *mongo.InsertOneResult {
 	coll := mongo2.Database("example").Collection("example")
 	result, err := coll.InsertOne(context.TODO(), post)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 	return result
 }
 
-func getDoc(post BlogPost, mongo1 *mongo.Client) bson.D {
+func getDoc(post BlogPost, mongo1 *mongo.Client) bson.M {
 	coll := mongo1.Database("example").Collection("example")
-	var result bson.D
-	err := coll.FindOne(context.TODO(), post).Decode(&result)
-
+	var result []bson.M
+	opts := options.Find().SetSort(bson.D{{"age", 1}})
+	cursor, err := coll.Find(context.TODO(), bson.D{{"title", post.Title}}, opts)
+	if err = cursor.All(context.TODO(), &result); err != nil {
+		log.Fatal(err)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return result
+	return result[len(result)-1]
 }
 
 func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-
 	mongo1_uri := fmt.Sprintf("mongodb://%s:%s", MONGO1_HOST, MONGO1_PORT)
 	mongo1, err := mongo.NewClient(options.Client().ApplyURI(mongo1_uri))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	err = mongo1.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer mongo1.Disconnect(ctx)
-
 	mongo2_uri := fmt.Sprintf("mongodb://%s:%s", MONGO2_HOST, MONGO2_PORT)
 	mongo2, err := mongo.NewClient(options.Client().ApplyURI(mongo2_uri))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	err = mongo2.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer mongo2.Disconnect(ctx)
-
 	redis_uri := fmt.Sprintf("redis://%s:%s/0", REDIS_HOST, REDIS_PORT)
 	opt, err := redis.ParseURL(redis_uri)
 	if err != nil {
@@ -86,13 +82,11 @@ func main() {
 	defer pubsub.Close()
 	ch := pubsub.Channel()
 	for msg := range ch {
-		fmt.Println(msg.Payload)
 		post := BlogPost{}
 		if err := json.Unmarshal([]byte(msg.Payload), &post); err != nil {
 			panic(err)
 		}
 		re := getDoc(post, mongo1)
-		r := insertDoc(re, mongo2)
-		fmt.Println(r)
+		insertDoc(re, mongo2)
 	}
 }

@@ -14,20 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type BlogPost struct {
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Body   string `json:"body"`
-}
-
-type Doc struct {
-	Data bson.D
-}
-
-type Docs struct {
-	Data []bson.M
-}
-
 var MONGO2_HOST = os.Getenv("MONGO2_HOST")
 var MONGO2_PORT = os.Getenv("MONGO2_PORT")
 

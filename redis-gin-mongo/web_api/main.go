@@ -43,9 +43,7 @@ func getDoc(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"Data": val,
-	})
+	c.JSON(http.StatusOK, val)
 }
 
 func getAllDocs(c *gin.Context) {
@@ -59,9 +57,7 @@ func getAllDocs(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"Data": val,
-	})
+	c.JSON(http.StatusOK, val)
 }
 
 func main() {
