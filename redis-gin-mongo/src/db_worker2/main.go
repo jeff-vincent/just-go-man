@@ -62,6 +62,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer mongo1.Disconnect(ctx)
+
 	mongo2_uri := fmt.Sprintf("mongodb://%s:%s", MONGO2_HOST, MONGO2_PORT)
 	mongo2, err := mongo.NewClient(options.Client().ApplyURI(mongo2_uri))
 	if err != nil {
@@ -72,6 +73,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer mongo2.Disconnect(ctx)
+
 	redis_uri := fmt.Sprintf("redis://%s:%s/0", REDIS_HOST, REDIS_PORT)
 	opt, err := redis.ParseURL(redis_uri)
 	if err != nil {

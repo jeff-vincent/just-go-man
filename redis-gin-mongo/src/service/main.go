@@ -19,25 +19,20 @@ var MONGO2_PORT = os.Getenv("MONGO2_PORT")
 
 func getDoc(client mongo.Client, title string) bson.D {
 	coll := client.Database("example").Collection("example")
-	fmt.Println(title)
 	var result bson.D
 	err := coll.FindOne(context.TODO(), bson.D{{"title", title}}).Decode(&result)
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	return result
 }
 
 func getAllDocs(client mongo.Client) []bson.M {
 	coll := client.Database("example").Collection("example")
 	cursor, err := coll.Find(context.TODO(), bson.D{})
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	var results []bson.M
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		panic(err)
@@ -46,7 +41,6 @@ func getAllDocs(client mongo.Client) []bson.M {
 }
 
 func main() {
-
 	mongo_uri := fmt.Sprintf("mongodb://%s:%s", MONGO2_HOST, MONGO2_PORT)
 	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_uri))
 	if err != nil {
@@ -58,7 +52,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(ctx)
-
 	r := gin.Default()
 
 	r.GET("/get-doc", func(c *gin.Context) {

@@ -45,7 +45,6 @@ func getDoc(c *gin.Context) {
 	val := &Doc{}
 	decoder := json.NewDecoder(resp.Body)
 	err := decoder.Decode(val)
-
 	if err != nil {
 		fmt.Println(err)
 	}
