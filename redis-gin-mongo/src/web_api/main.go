@@ -28,12 +28,14 @@ type Docs struct {
 
 var REDIS_HOST = os.Getenv("REDIS_HOST")
 var REDIS_PORT = os.Getenv("REDIS_PORT")
-var SERVICE_HOST = os.Getenv("SERVICE_HOST")
-var SERVICE_PORT = os.Getenv("SERVICE_PORT")
+var ANALYTICS_SERVICE_HOST = os.Getenv("ANALYTICS_SERVICE_HOST")
+var ANALYTICS_SERVICE_PORT = os.Getenv("ANALYTICS_SERVICE_PORT")
+var BLOG_SERVICE_HOST = os.Getenv("BLOG_SERVICE_HOST")
+var BLOG_SERVICE_PORT = os.Getenv("BLOG_SERVICE_PORT")
 
 func getDoc(c *gin.Context) {
 	title := c.Query("title")
-	address := fmt.Sprintf("http://%s:%s/get-doc?title=%s", SERVICE_HOST, SERVICE_PORT, title)
+	address := fmt.Sprintf("http://%s:%s/get-doc?title=%s", BLOG_SERVICE_HOST, BLOG_SERVICE_PORT, title)
 	resp, _ := http.Get(address)
 	defer resp.Body.Close()
 	val := &Doc{}
@@ -47,7 +49,7 @@ func getDoc(c *gin.Context) {
 }
 
 func getAllDocs(c *gin.Context) {
-	address := fmt.Sprintf("http://%s:%s/get-all-docs", SERVICE_HOST, SERVICE_PORT)
+	address := fmt.Sprintf("http://%s:%s/get-all-docs", BLOG_SERVICE_HOST, BLOG_SERVICE_PORT)
 	resp, _ := http.Get(address)
 	defer resp.Body.Close()
 	val := &Docs{}
@@ -72,6 +74,21 @@ func newPost(c *gin.Context, t string, a string, b string) {
 	})
 }
 
+func getPostViews(c *gin.Context) {
+	title := c.Query("title")
+	address := fmt.Sprintf("http://%s:%s/get-doc?title=%s", ANALYTICS_SERVICE_HOST, ANALYTICS_SERVICE_PORT, title)
+	resp, _ := http.Get(address)
+	defer resp.Body.Close()
+	val := &Doc{}
+	decoder := json.NewDecoder(resp.Body)
+	err := decoder.Decode(val)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	c.JSON(http.StatusOK, val)
+}
+
 func main() {
 	redis_uri := fmt.Sprintf("redis://%s:%s/0", REDIS_HOST, REDIS_PORT)
 	opt, err := redis.ParseURL(redis_uri)
@@ -94,7 +111,7 @@ func main() {
 			fmt.Println(err)
 		}
 		ctx := context.Background()
-		err = rdb.Publish(ctx, "1", payload).Err()
+		err = rdb.Publish(ctx, "Upload", payload).Err()
 		if err != nil {
 			panic(err)
 		}
@@ -102,5 +119,6 @@ func main() {
 	})
 	r.GET("/get-doc", getDoc)
 	r.GET("/get-all-docs", getAllDocs)
+	r.GET("/get-post-views", getPostViews)
 	r.Run(":8081")
 }

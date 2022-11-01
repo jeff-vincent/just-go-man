@@ -24,22 +24,13 @@ var REDIS_HOST = os.Getenv("REDIS_HOST")
 var REDIS_PORT = os.Getenv("REDIS_PORT")
 
 func insertDoc(client *mongo.Client, post BlogPost) *mongo.InsertOneResult {
-	coll := client.Database("example").Collection("example")
+	coll := client.Database("blog").Collection("posts")
 	res, err := coll.InsertOne(context.TODO(), post)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	return res
-}
-
-func Publish(rdb *redis.Client, payload []byte) {
-	ctx := context.Background()
-	err := rdb.Publish(ctx, "1", payload).Err()
-	if err != nil {
-		panic(err)
-	}
-
 }
 
 func main() {
@@ -60,7 +51,7 @@ func main() {
 		panic(err)
 	}
 	rdb := redis.NewClient(opt)
-	pubsub := rdb.Subscribe(ctx, "1")
+	pubsub := rdb.Subscribe(ctx, "Upload")
 	defer pubsub.Close()
 	ch := pubsub.Channel()
 	for msg := range ch {
@@ -69,9 +60,7 @@ func main() {
 			panic(err)
 		}
 		insertDoc(client, post)
-
-		r := rdb.Publish(ctx, "2", msg.Payload)
-		fmt.Println(r)
+		fmt.Println(post)
 
 	}
 }
